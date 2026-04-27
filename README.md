@@ -17,7 +17,7 @@ While exact results may vary due to an LLM's non-deterministic behaviour, the tr
 
 # Requirements
 
-The results from the paper were run on a PC with: CPU: Intel i714700KF, GPU: Gigabyte 4060 Ti 8GB, RAM: DDR5 64GB 6000MHz). While identical specifications aren't required, latency results will vary depending on hardware. The main requirements are:
+The results from the paper were run on a PC with: CPU: Intel i7-14700KF, GPU: Gigabyte 4060 Ti 8GB, RAM: DDR5 64GB 6000MHz. While identical specifications aren't required, latency results will vary depending on hardware. The main requirements are:
 
 Required:
 
@@ -32,13 +32,23 @@ Optional:
 
 # Setup
 
-First, download LM Studio ([download](https://lmstudio.ai/download)), which is used to run the LLM as a server. Once installed, enable `Developer mode` to allow you to create a server. Once in the developer tab enable the server and note where the models are accessible from (default: http://127.0.0.1:1234). The code expects the server to be running from the default domain. Once the server is set up, download the appropriate models using the model search tab:
+First, download LM Studio ([download](https://lmstudio.ai/download)), which is used to run the LLM as a server. Once installed, enable `Developer mode` to allow you to create a server. Once in the developer tab enable the server and note where the models are accessible from (default: `http://127.0.0.1:1234`). If your application says otherwise then change it within the code.
+
+When opening `http://127.0.0.1:1234` directly in a browser, you may see:
+
+```json
+{"error":"Unexpected endpoint or method. (GET /)"}
+```
+
+This is normal behaviour as the server expects a specific API endpoint, such as `/v1/models`, rather than the root URL. For example, `http://127.0.0.1:1234/v1/models` will return all downloaded models that can be loaded into the server.
+
+Once the server is set up, download the appropriate models using the model search tab:
 
 - qwen3-vl-4b: [https://lmstudio.ai/models/qwen/qwen3-vl-4b](https://lmstudio.ai/models/qwen/qwen3-vl-4b)
 - gpt-oss-20b: [https://lmstudio.ai/models/openai/gpt-oss-20b](https://lmstudio.ai/models/openai/gpt-oss-20b)
 - gpt-oss-120b: [https://lmstudio.ai/models/openai/gpt-oss-120b](https://lmstudio.ai/models/openai/gpt-oss-120b)
 
-Once the models have downloaded, install a version of Python 3.12 or newer (no additional Python packages required)
+Once the models have downloaded, install a version of Python 3.12 or newer (no additional Python packages required).
 
 # Run Experiments
 
@@ -57,6 +67,8 @@ To run the programs, simply type python followed by the desired program into the
 * `inclusion of no occupants` - expects y if allowing for an empty House Occupants array or n to set the min size to 1 (default)
 
 From there, the model will be asked a number of questions, with the terminal displaying the question, the oracle answer, the model answer, the match, and how long the response took.
+
+While the default context length of 4096 is sufficient for these scenarios, if you decide to extend the policy set or use models with longer reasoning traces, consider increasing the context length in the model load settings (e.g. 8192) to reduce the risk of truncation.
 
 # Execution Time
 
@@ -100,6 +112,22 @@ Once all the questions have been queried, a summary is printed that displays the
 ![1776436013273](image/README/1776436013273.png)
 
 This is the final input, where the user can decide to close the program after obtaining the results or get the model to explain its reasoning. If selected, the model will be provided with the question, the expected answer, and the model's answer. The model then returns a reason for the incorrect answer.
+
+# Oracle schema
+
+The `.xlsx` files structurally represent each scenario as formatted tables. In the code, these files are converted into two forms: a matrix for reproducing ground-truth answers, and natural-language policies used by the LLMs.
+
+## Simple Oracle
+
+The simple oracle is a device-by-user permission matrix. Rows represent devices and columns represent users. Permissions are denoted as `Y` or `1` for Permit, and `N` or `0` for Deny.
+
+In `Simple.py`, the matrix is accessed via `oracle[device_idx][user_idx]`. If the device query contains no valid user, the ground truth is set to Deny.
+
+## Complex Oracle
+
+The complex oracle uses the same device-by-user structure, but each cell can now contain one or more rule IDs rather than a direct Permit/Deny value. A cell that contains `M` or a collection of numbers other than `0` or `1` refers to specific rules that must hold for the user to be granted access to the device. The meaning of each rule ID is defined within the code just above the oracle definition.
+
+When a query is generated, the system calls `rule_checker`, which is a hard-coded function that evaluates the current environment against the relevant rules. The checker follows a Deny-Unless-Permit approach, meaning access is denied unless one of the applicable rules grants access.
 
 # Reproducing Paper Results
 
