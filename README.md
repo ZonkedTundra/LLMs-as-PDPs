@@ -53,9 +53,25 @@ Once the models have downloaded, install a version of Python 3.12 or newer (no a
 # Run Experiments
 
 ```bash
+# baseline
 python Simple.py
 python Complex.py
-python Complex_context_dropout.py
+
+# query_ambiguity
+python simple_context_dropout.py
+python complex_context_dropout.py
+
+# policy_ambiguity
+python simple_policy_dropout
+python complex_policy_dropout.py
+
+# policy_routing/subject
+python simple_routing_subject.py
+python complex_routing_subject.py
+
+# policy_routing/subject_and_user
+python simple_routing_subject_user.py
+python complex_routing_subject_user.py
 ```
 
 NOTE: Ensure LM Studio is running with the server reachable.
@@ -74,12 +90,12 @@ While the default context length of 4096 is sufficient for these scenarios, if y
 
 While the below time are averages using the defined hardware, they can vary drastically depending on what hardware and model the user selects.
 
-- Simple:
+- Baseline simple:
 
   - Qwen3: ~8 seconds
   - GPT-OSS 20B: ~155 seconds
   - GPT-OSS 120B: ~381 seconds
-- Complex:
+- Baseline complex:
 
   - Qwen3: ~10 seconds
   - GPT-OSS 20B: ~225 seconds
@@ -129,6 +145,8 @@ The complex oracle uses the same device-by-user structure, but each cell can now
 
 When a query is generated, the system calls `rule_checker`, which is a hard-coded function that evaluates the current environment against the relevant rules. The checker follows a Deny-Unless-Permit approach, meaning access is denied unless one of the applicable rules grants access.
 
-# Reproducing Paper Results
+# Reproducing SACMAT Paper Results
 
 Due to the probabilistic nature of LLMs, exact scores may vary between runs. To approximate the values reported within the paper, utilise multiple random seeds and re-runs to create an average scores. While the scores will be different the observed trends should still match the paper.
+
+Within this repo there are more python tests that were not referenced within the SACMAT paper. In order to get a direct match with the paper, go to commit version `e26d11dccfbb814d28b2eadbbc9b237768d569b8` or use {`baseline/simple.py`, `baseline/complex.py`, `policy_ambiguity/complex_context_dropout.py`}.
